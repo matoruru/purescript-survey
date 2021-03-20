@@ -2,6 +2,8 @@ module Main where
 
 import Prelude
 
+import Ansi.Codes (EscapeCode(..), escapeCodeToString)
+import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, makeAff)
 import Effect.Class.Console as Console
@@ -10,25 +12,15 @@ import Node.Encoding (Encoding(..))
 import Node.Process (stdin, stdout)
 import Node.ReadLine (close, createInterface)
 import Node.Stream (Readable, writeString)
+import Survey.Internal (Key)
 import Unsafe.Coerce (unsafeCoerce)
 
 type KeypressEventHandlerImpl = EffectFn2 String Key Unit
 
 type KeypressEventHandler = String -> Key -> Effect Unit
 
-type Key =
-  { sequence :: String
-  , name     :: String
-  , ctrl     :: Boolean
-  , meta     :: Boolean
-  , shift    :: Boolean
-  }
-
 main :: Effect Unit
 main = launchAff_ do
-  keypressLoop
-  keypressLoop
-  keypressLoop
   keypressLoop
 
 keypressLoop :: Aff Unit
@@ -39,12 +31,17 @@ keypressLoop = makeAff \cb -> do
   interface <- createInterface stdin mempty
   onKeypress stdin $ \_ key -> do
     case key.name of
-      "return" -> do
+      Just "return" -> do
         setRawMode stdin false
         close interface
         removeAllListeners stdin
         cb $ pure unit
-      _ -> print "Hello!\n"
+      --"backspace" -> print $ (escapeCodeToString $ Back 1) <> " " <> (escapeCodeToString $ Back 1)
+      --"up" -> print $ escapeCodeToString (Up 1)
+      --"s" -> print $ escapeCodeToString SavePosition
+      --"r" -> print $ escapeCodeToString RestorePosition
+      --"q" -> print $ escapeCodeToString QueryPosition
+      s -> print $ show key <> "\n"
   mempty
 
 print :: String -> Effect Unit
@@ -52,7 +49,7 @@ print s = void $ flip (writeString stdout UTF8) mempty s
 
 foreign import setRawModeImpl :: EffectFn2 (Readable ()) Boolean Unit
 foreign import emitKeypressEventsImpl :: EffectFn1 (Readable ()) Unit
-foreign import onKeypressImpl :: EffectFn2 (Readable ()) KeypressEventHandlerImpl Unit
+foreign import onKeypressImpl :: (String -> Maybe String) -> Maybe String -> EffectFn2 (Readable ()) KeypressEventHandlerImpl Unit
 foreign import removeAllListenersImpl :: EffectFn1 (Readable ()) Unit
 
 setRawMode :: Readable () -> Boolean -> Effect Unit
@@ -62,7 +59,7 @@ emitKeypressEvents :: Readable () -> Effect Unit
 emitKeypressEvents = runEffectFn1 emitKeypressEventsImpl
 
 onKeypress :: Readable () -> KeypressEventHandler -> Effect Unit
-onKeypress stream handler = runEffectFn2 onKeypressImpl stream (mkEffectFn2 handler)
+onKeypress stream handler = runEffectFn2 (onKeypressImpl Just Nothing) stream (mkEffectFn2 handler)
 
 removeAllListeners :: Readable () -> Effect Unit
 removeAllListeners = runEffectFn1 removeAllListenersImpl
