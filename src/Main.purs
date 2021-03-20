@@ -2,12 +2,12 @@ module Main where
 
 import Prelude
 
-import Data.Options ((:=))
 import Effect (Effect)
+import Effect.Aff (Aff, launchAff_, makeAff)
 import Effect.Class.Console as Console
 import Effect.Uncurried (EffectFn1, EffectFn2, mkEffectFn2, runEffectFn1, runEffectFn2)
-import Node.Process (stdin, stdout)
-import Node.ReadLine (Interface, close, createInterface, output)
+import Node.Process (stdin)
+import Node.ReadLine (close, createInterface)
 import Node.Stream (Readable)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -22,6 +22,29 @@ type Key =
   , meta     :: Boolean
   , shift    :: Boolean
   }
+
+main :: Effect Unit
+main = launchAff_ do
+  keypressLoop
+  keypressLoop
+  keypressLoop
+  keypressLoop
+
+keypressLoop :: Aff Unit
+keypressLoop = makeAff \cb -> do
+  emitKeypressEvents stdin
+  when stdinIsTTY do
+    setRawMode stdin true
+  interface <- createInterface stdin mempty
+  onKeypress stdin $ \_ key -> do
+    case key.name of
+      "return" -> do
+        setRawMode stdin false
+        close interface
+        removeAllListeners stdin
+        cb $ pure unit
+      _ -> Console.logShow key
+  mempty
 
 foreign import setRawModeImpl :: EffectFn2 (Readable ()) Boolean Unit
 foreign import emitKeypressEventsImpl :: EffectFn1 (Readable ()) Unit
@@ -42,19 +65,3 @@ removeAllListeners = runEffectFn1 removeAllListenersImpl
 
 stdinIsTTY :: Boolean
 stdinIsTTY = (unsafeCoerce stdin).isTTY
-
-main :: Effect Unit
-main = do
-  emitKeypressEvents stdin
-  when stdinIsTTY do
-    setRawMode stdin true
-    interface <- createInterface stdin mempty
-    onKeypress stdin $ keypressHandler interface
-
-keypressHandler :: Interface -> KeypressEventHandler
-keypressHandler interface _ key = case key.name of
-  "return" -> do
-    setRawMode stdin false
-    close interface
-    removeAllListeners stdin
-  _ -> Console.logShow key
