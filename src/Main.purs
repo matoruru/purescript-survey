@@ -2,11 +2,14 @@ module Main where
 
 import Prelude
 
-import Ansi.Codes (EscapeCode(..), escapeCodeToString)
+import Ansi.Codes (EraseParam(..), EscapeCode(..), eraseParamToString, escapeCodeToString)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (unwrap)
+import Data.String (joinWith)
+import Data.Traversable (for, sequence)
 import Effect (Effect)
+import Effect.AVar (AVar, new, put, take, tryPut, tryTake)
 import Effect.Aff (Aff, launchAff_, makeAff)
-import Effect.Aff.AVar (AVar, new)
 import Effect.Class.Console as Console
 import Effect.Uncurried (EffectFn1, EffectFn2, mkEffectFn2, runEffectFn1, runEffectFn2)
 import Node.Encoding (Encoding(..))
@@ -23,16 +26,17 @@ type KeypressEventHandler = String -> Key -> Effect Unit
 
 main :: Effect Unit
 main = launchAff_ do
-  outputText <- new mempty
-  keypressLoop outputText
+  keypressLoop
 
-keypressLoop :: AVar String -> Aff Unit
-keypressLoop outputText = makeAff \cb -> do
+keypressLoop :: Aff Unit
+keypressLoop = makeAff \cb -> do
   emitKeypressEvents stdin
   when stdinIsTTY do
     setRawMode stdin true
   interface <- createInterface stdin mempty
+  state <- new { cursorPosition: 0, plainText: "", escapes: [] }
   onKeypress stdin $ \_ key -> do
+    outputState <- tryTake state
     case key.name of
       Just "q" -> do
         setRawMode stdin false
@@ -40,7 +44,27 @@ keypressLoop outputText = makeAff \cb -> do
         removeAllListeners stdin
         cb $ pure unit
       _ -> do
-        print $ ""
+        case outputState of
+          Nothing -> pure unit
+          Just os -> do
+            print $ escapeCodeToString (EraseLine Entire) <> escapeCodeToString (HorizontalAbsolute 0)
+            let newState = text key os
+            _ <- tryPut newState state
+            print $ newState.plainText <> joinWith "" (map escapeCodeToString (map unwrap newState.escapes))
+
+            -- Debug
+            print $ escapeCodeToString SavePosition
+                 <> escapeCodeToString (Position 1 0)
+                 <> escapeCodeToString (EraseLine Entire)
+                 <> show key
+                 <> escapeCodeToString (Position 2 0)
+                 <> escapeCodeToString (EraseLine Entire)
+                 <> show ((\{ cursorPosition, plainText } -> { cursorPosition, plainText }) newState)
+                 <> escapeCodeToString (Position 3 0)
+                 <> escapeCodeToString (EraseLine Entire)
+                 -- <> show { ctrl: false, meta: false, name: (Just "backspace"), sequence: "\x7F", shift: false }
+                 <> escapeCodeToString RestorePosition
+
   mempty
 
 print :: String -> Effect Unit

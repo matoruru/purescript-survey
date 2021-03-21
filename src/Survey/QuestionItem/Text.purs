@@ -1,40 +1,38 @@
-module Survey.QuestionItem.Text ( text ) where
+module Survey.QuestionItem.Text where
+
+import Prelude
 
 import Ansi.Codes (EscapeCode(..), escapeCodeToString)
+import Data.CodePoint.Unicode as Unicode
 import Data.Maybe (Maybe(..))
-import Data.String (splitAt)
+import Data.String (codePointFromChar, length, splitAt)
+import Data.String.CodeUnits (toChar)
 import Prelude (mempty, ($), (<>), (-))
 import Survey.Internal (Key)
-import Survey.Type (CursorPosition, OutputFormat)
+import Survey.Operation (Operation(..), evalOperation)
+import Survey.Type (CursorPosition, OutputState)
 
-text :: Key -> OutputFormat -> OutputFormat
-text
-  { name, sequence, ctrl }
-  outputFormat@
-    { cursorPosition
-    , plainText
-    , escapes
-    , operations
-    } = case name of
-  Just "backspace" -> do
-    outputFormat
-    --let a s = do
-    --            let { before, after } = splitAt cursorPosition plainText
-    --            
-    --outputFormat
-    --  { cursorPosition = cursorPosition - 1
-    --  , operations = operations <> [  ]
-    --  }
-  Just "up" -> outputFormat
-  Just "down" -> outputFormat
-  Just "left" -> outputFormat --escapeCodeToString $ Back 1
-  Just "right" -> outputFormat --escapeCodeToString $ Forward 1
-  _ -> outputFormat --sequence
+text :: Key -> OutputState -> OutputState
+text key = evalOperation $ keyToOperation key
 
---deleteOneBeforeCursor :: CursorPosition -> String -> String
---deleteOneBeforeCursor cursorPosition s = do
---  let { before, after } = splitAt (cursorPosition - 1) plainText
+keyToOperation :: Key -> Operation
+keyToOperation { name, sequence, ctrl } =
+  case name of
+    Just "backspace" -> DeleteBackward
+    Just "up" -> DoNothing
+    Just "down" -> DoNothing
+    Just "right" -> MoveRight
+    Just "left" -> MoveLeft
+    _ ->
+      case ctrl of
+        true -> DoNothing
+        false -> PrintCharacter sequence
+        --Nothing -> evalOperation $ PrintCharacter sequence
 
---01234
---abcd
-
+        --Just name' ->
+        --  case name' of
+        --    "up" -> evalOperation DoNothing
+        --    "down" -> evalOperation DoNothing
+        --    "left" -> evalOperation DoNothing
+        --    "right" -> evalOperation DoNothing
+        --_ -> evalOperation DoNothing

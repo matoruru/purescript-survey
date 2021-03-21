@@ -1,12 +1,11 @@
 module Survey.Type where
 
-import Ansi.Codes (EscapeCode)
+import Survey.Internal (EscapeCodeWrapper)
 
 type CursorPosition = Int
 
-type OutputFormat =
+type OutputState =
   { cursorPosition :: CursorPosition
   , plainText :: String
-  , escapes :: Array EscapeCode
-  , operations :: Array (String -> String)
+  , escapes :: Array EscapeCodeWrapper
   }
