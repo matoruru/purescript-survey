@@ -4,12 +4,14 @@ import Prelude
 
 import Ansi.Codes (EscapeCode(..), escapeCodeToString)
 import Data.Eq.Generic (genericEq)
+import Data.Foldable (foldl)
 import Data.Generic.Rep (class Generic)
 import Data.Newtype (wrap)
 import Data.Show.Generic (genericShow)
 import Data.String (length, splitAt)
 import Survey.Internal (EscapeCodeWrapper(..))
 import Survey.Type (CursorPosition, OutputState)
+import Survey.Util (aggregateMovements)
 
 data Operation
   = DeleteBackward
@@ -44,14 +46,14 @@ evalOperation = case _ of
     if (os.cursorPosition - 1) < length os.plainText
       then
         os { cursorPosition = os.cursorPosition + 1
-           , escapes = os.escapes <> [ wrap $ Forward 1 ]
+           , escapes = aggregateMovements $ os.escapes <> [ wrap $ Forward 1 ]
            }
       else identity os
   MoveLeft -> \os ->
     if os.cursorPosition > 1
       then
         os { cursorPosition = os.cursorPosition - 1
-           , escapes = os.escapes <> [ wrap $ Back 1 ]
+           , escapes = aggregateMovements $ os.escapes <> [ wrap $ Back 1 ]
            }
       else identity os
   DoNothing -> identity

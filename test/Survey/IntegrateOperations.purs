@@ -12,7 +12,7 @@ import Test.Spec (SpecT, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
 integrateOperations :: forall t1 t2. Monad t1 => MonadThrow Error t2 => SpecT t2 Unit t1 Unit
-integrateOperations = describe "Test.Survey.Operation" do
+integrateOperations = describe "Test.Survey.IntegrageOperations" do
   describe "Delete backward from the cursor position" do
     it "Delete the last character" do
       evalOperation DeleteBackward
@@ -63,19 +63,32 @@ integrateOperations = describe "Test.Survey.Operation" do
         { cursorPosition: 7, plainText: "abcdef", escapes: [] }
 
     it "Print a character before the last character" do
-      evalOperation (PrintCharacter "c")
-        { cursorPosition: 5, plainText: "abcde", escapes: [] } `shouldEqual`
-        { cursorPosition: 6, plainText: "abcdce", escapes: [] }
+      ( evalOperation MoveLeft
+      >>> evalOperation (PrintCharacter "c")
+      )
+        { cursorPosition: 6, plainText: "abcde", escapes: [] } `shouldEqual`
+        { cursorPosition: 6, plainText: "abcdce", escapes: [ wrap $ Back 1 ] }
 
     it "Print a character from the beginning" do
-      evalOperation (PrintCharacter "z")
-        { cursorPosition: 1, plainText: "abcde", escapes: [] } `shouldEqual`
-        { cursorPosition: 2, plainText: "zabcde", escapes: [] }
+      ( evalOperation MoveLeft
+      >>> evalOperation MoveLeft
+      >>> evalOperation MoveLeft
+      >>> evalOperation MoveLeft
+      >>> evalOperation MoveLeft
+      >>> evalOperation (PrintCharacter "z")
+      )
+        { cursorPosition: 6, plainText: "abcde", escapes: [] } `shouldEqual`
+        { cursorPosition: 2, plainText: "zabcde", escapes: [ wrap $ Back 5 ] }
 
     it "Print a character after the first character" do
-      evalOperation (PrintCharacter "z")
-        { cursorPosition: 2, plainText: "abcde", escapes: [] } `shouldEqual`
-        { cursorPosition: 3, plainText: "azbcde", escapes: [] }
+      ( evalOperation MoveLeft
+      >>> evalOperation MoveLeft
+      >>> evalOperation MoveLeft
+      >>> evalOperation MoveLeft
+      >>> evalOperation (PrintCharacter "z")
+      )
+        { cursorPosition: 6, plainText: "abcde", escapes: [] } `shouldEqual`
+        { cursorPosition: 3, plainText: "azbcde", escapes: [ wrap $ Back 4 ] }
 
   describe "Move the cursor" do
     it "Move right, d to e" do
