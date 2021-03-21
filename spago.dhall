@@ -12,6 +12,7 @@ You can edit this file as you like.
   , "node-process"
   , "node-readline"
   , "psci-support"
+  , "spec"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]
