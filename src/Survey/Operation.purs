@@ -27,7 +27,7 @@ instance showOperation :: Show Operation where
 instance eqOperation :: Eq Operation where
   eq = genericEq
 
-evalOperation :: Operation -> (OutputState -> OutputState)
+evalOperation :: Operation -> OutputState -> OutputState
 evalOperation = case _ of
   DeleteBackward -> \os ->
     os { plainText = (splitAt (os.cursorPosition - 2) os.plainText).before <>
