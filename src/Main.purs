@@ -34,7 +34,7 @@ keypressLoop = makeAff \cb -> do
   when stdinIsTTY do
     setRawMode stdin true
   interface <- createInterface stdin mempty
-  state <- new { cursorPosition: 0, plainText: "", escapes: [] }
+  state <- new { cursorPosition: 1, plainText: "", escapes: [] }
   onKeypress stdin $ \_ key -> do
     outputState <- tryTake state
     case key.name of

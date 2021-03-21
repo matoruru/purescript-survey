@@ -30,25 +30,25 @@ instance eqOperation :: Eq Operation where
 evalOperation :: Operation -> (OutputState -> OutputState)
 evalOperation = case _ of
   DeleteBackward -> \os ->
-    os { plainText = (splitAt (os.cursorPosition - 1) os.plainText).before <>
-                     (splitAt os.cursorPosition os.plainText).after
-       , cursorPosition = if os.cursorPosition < 1 then 0 else os.cursorPosition - 1
+    os { plainText = (splitAt (os.cursorPosition - 2) os.plainText).before <>
+                     (splitAt (os.cursorPosition - 1) os.plainText).after
+       , cursorPosition = if os.cursorPosition < 2 then 1 else os.cursorPosition - 1
        }
   DeleteForward -> identity
   PrintCharacter c -> \os ->
-    os { plainText = (splitAt os.cursorPosition os.plainText).before <> c <>
-                     (splitAt os.cursorPosition os.plainText).after
+    os { plainText = (splitAt (os.cursorPosition - 1) os.plainText).before <> c <>
+                     (splitAt (os.cursorPosition - 1) os.plainText).after
        , cursorPosition = os.cursorPosition + 1
        }
   MoveRight -> \os ->
-    if os.cursorPosition < length os.plainText
+    if (os.cursorPosition - 1) < length os.plainText
       then
         os { cursorPosition = os.cursorPosition + 1
            , escapes = os.escapes <> [ wrap $ Forward 1 ]
            }
       else identity os
   MoveLeft -> \os ->
-    if os.cursorPosition > 0
+    if os.cursorPosition > 1
       then
         os { cursorPosition = os.cursorPosition - 1
            , escapes = os.escapes <> [ wrap $ Back 1 ]
