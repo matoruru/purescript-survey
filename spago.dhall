@@ -9,12 +9,12 @@ You can edit this file as you like.
   , "avar"
   , "console"
   , "effect"
+  , "maybe"
   , "newtype"
   , "node-process"
   , "node-readline"
   , "psci-support"
-  , "spec"
-  , "unicode"
+  , "strings"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]

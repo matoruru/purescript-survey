@@ -3,10 +3,8 @@ module Survey.QuestionItem.Text where
 import Prelude
 
 import Ansi.Codes (EscapeCode(..), escapeCodeToString)
-import Data.CodePoint.Unicode as Unicode
 import Data.Maybe (Maybe(..))
 import Data.String (codePointFromChar, length, splitAt)
-import Data.String.CodeUnits (toChar)
 import Prelude (mempty, ($), (<>), (-))
 import Survey.Internal (Key)
 import Survey.Operation (Operation(..), evalOperation)
