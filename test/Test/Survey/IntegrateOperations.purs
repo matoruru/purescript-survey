@@ -12,7 +12,7 @@ import Survey.Operation (Operation(..), evalOperation)
 import Survey.Type (OutputState)
 import Test.Spec (SpecT, describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import Test.Util (composeOperations)
+import Test.TestUtil (composeOperations)
 
 integrateOperations :: forall t1 t2. Monad t1 => MonadThrow Error t2 => SpecT t2 Unit t1 Unit
 integrateOperations = describe "Composing multiple operations" do
