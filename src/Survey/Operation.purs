@@ -14,11 +14,17 @@ import Survey.Type (CursorPosition, OutputState)
 import Survey.Util (aggregateMovements)
 
 data Operation
-  = DeleteBackward
+  = DeleteUnderCursor
+  | DeleteBackward
   | DeleteForward
+  | DeleteUnderCursorToTail
+  | DeleteBeforeUnderCursorToHead
+  | DeleteAWordBeforeCursor
   | PrintCharacter String
   | MoveRight
   | MoveLeft
+  | MoveToTail
+  | MoveToHead
   | DoNothing
 
 derive instance genericOperation :: Generic Operation _
@@ -31,12 +37,16 @@ instance eqOperation :: Eq Operation where
 
 evalOperation :: Operation -> OutputState -> OutputState
 evalOperation = case _ of
+  DeleteUnderCursor -> identity
   DeleteBackward -> \os ->
     os { plainText = (splitAt (os.cursorPosition - 2) os.plainText).before <>
                      (splitAt (os.cursorPosition - 1) os.plainText).after
        , cursorPosition = if os.cursorPosition < 2 then 1 else os.cursorPosition - 1
        }
   DeleteForward -> identity
+  DeleteUnderCursorToTail -> identity
+  DeleteBeforeUnderCursorToHead -> identity
+  DeleteAWordBeforeCursor -> identity
   PrintCharacter c -> \os ->
     os { plainText = (splitAt (os.cursorPosition - 1) os.plainText).before <> c <>
                      (splitAt (os.cursorPosition - 1) os.plainText).after
@@ -56,4 +66,6 @@ evalOperation = case _ of
            , escapes = aggregateMovements $ os.escapes <> [ wrap $ Back 1 ]
            }
       else identity os
+  MoveToTail -> identity
+  MoveToHead -> identity
   DoNothing -> identity
