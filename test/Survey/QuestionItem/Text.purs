@@ -13,7 +13,7 @@ import Test.Spec (SpecT, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual)
 
 text :: forall t1 t2. Monad t1 => MonadThrow Error t2 => SpecT t2 Unit t1 Unit
-text = describe "Test.Survey.QuestionItem.Text" do
+text = do
   describe "Press key" do
     it "[ctrl]+[h] deletes a character before the cursor" do
       keyToOperation

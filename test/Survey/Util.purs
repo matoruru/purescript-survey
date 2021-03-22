@@ -13,7 +13,7 @@ import Test.Spec (SpecT, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
 utils :: forall t1 t2. Monad t1 => MonadThrow Error t2 => SpecT t2 Unit t1 Unit
-utils = describe "Test.Survey.Util" do
+utils = do
   describe "Aggregates the movenents array" do
     it "[] = []" do
       aggregateMovements [] `shouldEqual` []

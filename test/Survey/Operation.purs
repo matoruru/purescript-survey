@@ -12,7 +12,7 @@ import Test.Spec (SpecT, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
 operations :: forall t1 t2. Monad t1 => MonadThrow Error t2 => SpecT t2 Unit t1 Unit
-operations = describe "Test.Survey.Operation" do
+operations = do
   describe "Delete backward from the cursor position" do
     it "Delete the last character" do
       evalOperation DeleteBackward
