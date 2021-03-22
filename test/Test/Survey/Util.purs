@@ -29,17 +29,21 @@ utils = do
 
     it "[Forward 3, Back 5, Back 1, Forward 4] = [Forward 1]" do
       aggregateMovements
-        [ wrap $ Forward 3
-        , wrap $ Back 5
-        , wrap $ Back 1
-        , wrap $ Forward 4
-        ] `shouldEqual` [ wrap $ Forward 1 ]
+        (map wrap
+          [ Forward 3
+          , Back 5
+          , Back 1
+          , Forward 4
+          ]) `shouldEqual`
+          [ wrap $ Forward 1 ]
 
     it "[Forward 3, Back 5, Back 1, Forward 4, Back 5] = [Back 4]" do
       aggregateMovements
-        [ wrap $ Forward 3
-        , wrap $ Back 5
-        , wrap $ Back 1
-        , wrap $ Forward 4
-        , wrap $ Back 5
-        ] `shouldEqual` [ wrap $ Back 4 ]
+        (map wrap
+          [ Forward 3
+          , Back 5
+          , Back 1
+          , Forward 4
+          , Back 5
+          ]) `shouldEqual`
+          [ wrap $ Back 4 ]

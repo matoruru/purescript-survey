@@ -59,10 +59,10 @@ keypressLoop = makeAff \cb -> do
                  <> show key
                  <> escapeCodeToString (Position 2 0)
                  <> escapeCodeToString (EraseLine Entire)
-                 <> show ((\{ cursorPosition, plainText } -> { cursorPosition, plainText }) newState)
+                 <> show newState
                  <> escapeCodeToString (Position 3 0)
                  <> escapeCodeToString (EraseLine Entire)
-                 -- <> show { ctrl: false, meta: false, name: (Just "backspace"), sequence: "\x7F", shift: false }
+                 <> show { ctrl: false, meta: false, name: (Just "backspace"), sequence: "\x17", shift: false }
                  <> escapeCodeToString RestorePosition
 
   mempty

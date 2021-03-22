@@ -16,7 +16,6 @@ import Survey.Util (aggregateMovements)
 data Operation
   = DeleteUnderCursor
   | DeleteBackward
-  | DeleteForward
   | DeleteUnderCursorToTail
   | DeleteBeforeUnderCursorToHead
   | DeleteAWordBeforeCursor
@@ -37,19 +36,32 @@ instance eqOperation :: Eq Operation where
 
 evalOperation :: Operation -> OutputState -> OutputState
 evalOperation = case _ of
-  DeleteUnderCursor -> identity
+  DeleteUnderCursor -> \os ->
+    if (os.cursorPosition - 1) < length os.plainText
+      then
+        os { plainText = (splitAt (os.cursorPosition - 1) os.plainText).before <>
+                         (splitAt os.cursorPosition os.plainText).after
+           , escapes = aggregateMovements $ os.escapes <> [ wrap $ Forward 1 ]
+           }
+      else identity os
   DeleteBackward -> \os ->
     os { plainText = (splitAt (os.cursorPosition - 2) os.plainText).before <>
                      (splitAt (os.cursorPosition - 1) os.plainText).after
        , cursorPosition = if os.cursorPosition < 2 then 1 else os.cursorPosition - 1
        }
-  DeleteForward -> identity
-  DeleteUnderCursorToTail -> identity
+  DeleteUnderCursorToTail -> \os ->
+    if (os.cursorPosition - 1) < length os.plainText
+      then do
+        let { before, after }= splitAt (os.cursorPosition - 1) os.plainText
+        os { plainText = before
+           , escapes = aggregateMovements $ os.escapes <> [ wrap $ Forward $ length after ]
+           }
+      else identity os
   DeleteBeforeUnderCursorToHead -> identity
   DeleteAWordBeforeCursor -> identity
-  PrintCharacter c -> \os ->
-    os { plainText = (splitAt (os.cursorPosition - 1) os.plainText).before <> c <>
-                     (splitAt (os.cursorPosition - 1) os.plainText).after
+  PrintCharacter c -> \os -> do
+    let { before, after } = splitAt (os.cursorPosition - 1) os.plainText
+    os { plainText = before <> c <> after
        , cursorPosition = os.cursorPosition + 1
        }
   MoveRight -> \os ->
