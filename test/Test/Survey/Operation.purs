@@ -16,23 +16,23 @@ operations = do
   describe "Delete a character under the cursor" do
     it "Delete the last character" do
       evalOperation DeleteUnderCursor
-        { cursorPosition: 5, plainText: "abcde", escapes: [] } `shouldEqual`
+        { cursorPosition: 5, plainText: "abcde", escapes: [ wrap $ Back 1 ] } `shouldEqual`
         { cursorPosition: 5, plainText: "abcd", escapes: [] }
 
     it "Delete before the last character" do
       evalOperation DeleteUnderCursor
-        { cursorPosition: 4, plainText: "abcde", escapes: [] } `shouldEqual`
-        { cursorPosition: 4, plainText: "abce", escapes: [] }
+        { cursorPosition: 4, plainText: "abcde", escapes: [ wrap $ Back 2 ] } `shouldEqual`
+        { cursorPosition: 4, plainText: "abce", escapes: [ wrap $ Back 1 ] }
 
     it "Delete the first character" do
       evalOperation DeleteUnderCursor
-        { cursorPosition: 1, plainText: "abcde", escapes: [] } `shouldEqual`
-        { cursorPosition: 1, plainText: "bcde", escapes: [] }
+        { cursorPosition: 1, plainText: "abcde", escapes: [ wrap $ Back 5 ] } `shouldEqual`
+        { cursorPosition: 1, plainText: "bcde", escapes: [ wrap $ Back 4 ] }
 
     it "Delete after the first character" do
       evalOperation DeleteUnderCursor
-        { cursorPosition: 2, plainText: "abcde", escapes: [] } `shouldEqual`
-        { cursorPosition: 2, plainText: "acde", escapes: [] }
+        { cursorPosition: 2, plainText: "abcde", escapes: [ wrap $ Back 4 ] } `shouldEqual`
+        { cursorPosition: 2, plainText: "acde", escapes: [ wrap $ Back 3 ] }
 
     it "Deleting at the end of line shouldn't do anything" do
       evalOperation DeleteUnderCursor
@@ -68,17 +68,17 @@ operations = do
   describe "Delete from under the cursor to the end of line" do
     it "Delete the c to the end" do
       evalOperation DeleteUnderCursorToTail
-        { cursorPosition: 3, plainText: "abcde", escapes: [] } `shouldEqual`
+        { cursorPosition: 3, plainText: "abcde", escapes: [ wrap $ Back 3 ] } `shouldEqual`
         { cursorPosition: 3, plainText: "ab", escapes: [] }
 
     it "Delete from the head" do
       evalOperation DeleteUnderCursorToTail
-        { cursorPosition: 1, plainText: "abcde", escapes: [] } `shouldEqual`
+        { cursorPosition: 1, plainText: "abcde", escapes: [ wrap $ Back 5 ] } `shouldEqual`
         { cursorPosition: 1, plainText: "", escapes: [] }
 
     it "Deleting the last character" do
       evalOperation DeleteUnderCursorToTail
-        { cursorPosition: 5, plainText: "abcde", escapes: [] } `shouldEqual`
+        { cursorPosition: 5, plainText: "abcde", escapes: [ wrap $ Back 1 ] } `shouldEqual`
         { cursorPosition: 5, plainText: "abcd", escapes: [] }
 
     it "Deleting from the end shoudn't do anything" do

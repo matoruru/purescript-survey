@@ -13,6 +13,7 @@ import Test.Survey.Util (utils) as Test
 
 main :: Effect Unit
 main = launchAff_ $ runSpec [consoleReporter] do
+  Test.operations
   Test.integrateOperations
   Test.questionItems
   Test.utils
