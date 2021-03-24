@@ -7,8 +7,8 @@ import Control.Monad.Error.Class (class MonadThrow)
 import Data.Newtype (wrap)
 import Data.Show (class Show)
 import Effect.Exception (Error)
-import Survey.Operation (Operation(..), evalOperation)
-import Survey.Util (aggregateMovements)
+import Survey.Operation (evalOperation)
+import Survey.Util (aggregateMovements, findFirstTailFrom)
 import Test.Spec (SpecT, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
@@ -47,3 +47,40 @@ utils = do
           , Back 5
           ]) `shouldEqual`
           [ wrap $ Back 4 ]
+
+  --
+  --  " _      word   "
+  --    ^          ^
+  --    |          |
+  -- position   find here
+  --
+  describe "Find the first tail of word" do
+    it "Only one word" do
+      findFirstTailFrom 1 "abc" `shouldEqual` 4
+
+    it "Before the word" do
+      findFirstTailFrom 1 "  abc " `shouldEqual` 6
+
+    it "From inside the word" do
+      findFirstTailFrom 4 "  abc " `shouldEqual` 6
+
+    it "From end of the word" do
+      findFirstTailFrom 5 "  abc " `shouldEqual` 6
+
+    it "Two words" do
+      findFirstTailFrom 2 "  abc defg " `shouldEqual` 6
+
+    it "Tail to the next tail" do
+      findFirstTailFrom 6 "  abc defg " `shouldEqual` 11
+
+    it "After word" do
+      findFirstTailFrom 4 "abc  " `shouldEqual` 6
+
+    it "Without word" do
+      findFirstTailFrom 1 "   " `shouldEqual` 4
+
+    it "From the end of line shoudn't do anything" do
+      findFirstTailFrom 4 "   " `shouldEqual` 4
+
+    it "When there's no characters shoudn't do anything" do
+      findFirstTailFrom 1 "" `shouldEqual` 1

@@ -9,8 +9,8 @@ import Data.Foldable (foldl)
 import Data.Newtype (wrap)
 import Data.Show (class Show)
 import Effect.Exception (Error)
-import Survey.Operation (Operation(..), evalOperation)
-import Survey.Type (OutputState)
+import Survey.Operation (evalOperation)
+import Survey.Type (Operation(..), OutputState)
 import Test.Spec (SpecT, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual)
 import Test.TestUtil (composeOperations)
@@ -187,47 +187,45 @@ operations = describe "Composing multiple operations" do
         { cursorPosition: 6, plainText: "abcde", escapes: [] } `shouldEqual`
         { cursorPosition: 1, plainText: "abcde", escapes: [ wrap $ Back 5 ] }
 
-  describe "DeleteAWordBeforeCursor" do
+  describe "Delete a word before the cursor position" do
     it "Delete a first word before cursor from just after the word" do
       composeOperations
-        [ DeleteAWordBeforeCursor
+        [ DeleteOneWordBeforeCursor
         ]
         { cursorPosition: 6, plainText: "abcde", escapes: [] } `shouldEqual`
         { cursorPosition: 1, plainText: "", escapes: [] }
 
     it "Delete a first word before cursor from after some spaces" do
       composeOperations
-        [ DeleteAWordBeforeCursor
+        [ DeleteOneWordBeforeCursor
         ]
         { cursorPosition: 7, plainText: "abcde ", escapes: [] } `shouldEqual`
         { cursorPosition: 1, plainText: "", escapes: [] }
 
-    it "Delete a first word before cursor from after some spaces" do
       composeOperations
-        [ DeleteAWordBeforeCursor
+        [ DeleteOneWordBeforeCursor
         ]
         { cursorPosition: 8, plainText: "abcde  ", escapes: [] } `shouldEqual`
         { cursorPosition: 1, plainText: "", escapes: [] }
 
-    it "Delete a first word before cursor from after some spaces" do
       composeOperations
-        [ DeleteAWordBeforeCursor
+        [ DeleteOneWordBeforeCursor
         ]
         { cursorPosition: 9, plainText: "abcde   ", escapes: [] } `shouldEqual`
         { cursorPosition: 1, plainText: "", escapes: [] }
 
-    it "Delete a first word before cursor from after some spaces" do
       composeOperations
-        [ DeleteAWordBeforeCursor
+        [ MoveLeft
+        , DeleteOneWordBeforeCursor
         ]
-        { cursorPosition: 8, plainText: "abcde   ", escapes: [] } `shouldEqual`
+        { cursorPosition: 9, plainText: "abcde   ", escapes: [] } `shouldEqual`
         { cursorPosition: 1, plainText: " ", escapes: [ wrap $ Back 1 ] }
 
     it "Delete a first word before cursor from inside the word" do
       composeOperations
         [ MoveLeft
         , MoveLeft
-        , DeleteAWordBeforeCursor
+        , DeleteOneWordBeforeCursor
         ]
         { cursorPosition: 6, plainText: "abcde", escapes: [] } `shouldEqual`
         { cursorPosition: 1, plainText: "de", escapes: [ wrap $ Back 2 ] }
@@ -239,59 +237,23 @@ operations = describe "Composing multiple operations" do
         , MoveLeft
         , MoveLeft
         , MoveLeft
-        , DeleteAWordBeforeCursor
+        , DeleteOneWordBeforeCursor
         ]
         { cursorPosition: 6, plainText: "abcde", escapes: [] } `shouldEqual`
         { cursorPosition: 1, plainText: "abcde", escapes: [ wrap $ Back 5 ] }
 
     it "Delete a word after some words" do
       composeOperations
-        [ DeleteAWordBeforeCursor
+        [ DeleteOneWordBeforeCursor
         ]
         { cursorPosition: 10, plainText: "abcde abc", escapes: [] } `shouldEqual`
         { cursorPosition: 7, plainText: "abcde ", escapes: [] }
 
-    it "Delete a word after some words" do
       composeOperations
-        [ DeleteAWordBeforeCursor
+        [ DeleteOneWordBeforeCursor
         ]
         { cursorPosition: 11, plainText: "abcde  abc", escapes: [] } `shouldEqual`
         { cursorPosition: 8, plainText: "abcde  ", escapes: [] }
-
-    it "Delete a word separated with \"/\"" do
-      composeOperations
-        [ DeleteAWordBeforeCursor
-        ]
-        { cursorPosition: 10, plainText: "abcde/abc", escapes: [] } `shouldEqual`
-        { cursorPosition: 7, plainText: "abcde/", escapes: [] }
-
-    it "Delete a word separated with \"/\" from inside the word" do
-      composeOperations
-        [ DeleteAWordBeforeCursor
-        ]
-        { cursorPosition: 8, plainText: "abcde/abc", escapes: [] } `shouldEqual`
-        { cursorPosition: 8, plainText: "abcde/bc", escapes: [ wrap $ Back 2 ] }
-
-    it "Delete the first \"/\"" do
-      composeOperations
-        [ DeleteAWordBeforeCursor
-        ]
-        { cursorPosition: 2, plainText: "/", escapes: [] } `shouldEqual`
-        { cursorPosition: 1, plainText: "", escapes: [] }
-
-    it "Delete the first \"/\" spaces" do
-      composeOperations
-        [ DeleteAWordBeforeCursor
-        ]
-        { cursorPosition: 4, plainText: "/  ", escapes: [] } `shouldEqual`
-        { cursorPosition: 1, plainText: "", escapes: [] }
-
-    it "Delete the first \"/\" spaces" do
-      composeOperations
-        [ DeleteAWordBeforeCursor
-        ]
-        { cursorPosition: 5, plainText: " /  ", escapes: [] } `shouldEqual`
-        { cursorPosition: 2, plainText: " ", escapes: [] }
 
   describe "Print a character from the cursor position" do
     it "Print a character from the end" do
@@ -362,6 +324,194 @@ operations = describe "Composing multiple operations" do
         ]
         { cursorPosition: 6, plainText: "abcde", escapes: [] } `shouldEqual`
         { cursorPosition: 5, plainText: "abcde", escapes: [ wrap $ Back 1 ] }
+
+
+  --
+  --  " _      word   "
+  --    ^          ^
+  --    |          |
+  -- cursor     find here
+  --
+  describe "Move to right till the end of the word" do
+    it "Move from the head without space" do
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveOneWordRight
+        ]
+        { cursorPosition: 6, plainText: "abcde", escapes: [] } `shouldEqual`
+        { cursorPosition: 6, plainText: "abcde", escapes: [] }
+
+    it "Move from the middle without space" do
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveOneWordRight
+        ]
+        { cursorPosition: 6, plainText: "abcde", escapes: [] } `shouldEqual`
+        { cursorPosition: 6, plainText: "abcde", escapes: [] }
+
+    it "Move from the head with spaces" do
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveOneWordRight
+        ]
+        { cursorPosition: 10, plainText: "abcde    ", escapes: [] } `shouldEqual`
+        { cursorPosition: 6, plainText: "abcde    ", escapes: [ wrap $ Back 4 ] }
+
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveOneWordRight
+        ]
+        { cursorPosition: 13, plainText: "   abcde    ", escapes: [] } `shouldEqual`
+        { cursorPosition: 9, plainText: "   abcde    ", escapes: [ wrap $ Back 4 ] }
+
+    it "Move from the head with multiple words" do
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveOneWordRight
+        ]
+        { cursorPosition: 13, plainText: "abcde abc aa", escapes: [] } `shouldEqual`
+        { cursorPosition: 10, plainText: "abcde abc aa", escapes: [ wrap $ Back 3 ] }
+
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveOneWordRight
+        ]
+        { cursorPosition: 13, plainText: "abcde abc aa", escapes: [] } `shouldEqual`
+        { cursorPosition: 10, plainText: "abcde abc aa", escapes: [ wrap $ Back 3 ] }
+
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveOneWordRight
+        ]
+        { cursorPosition: 14, plainText: "abcde abc  aa", escapes: [] } `shouldEqual`
+        { cursorPosition: 10, plainText: "abcde abc  aa", escapes: [ wrap $ Back 4 ] }
+
+    it "Move to right but only spaces" do
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveOneWordRight
+        ]
+        { cursorPosition: 5, plainText: "    ", escapes: [] } `shouldEqual`
+        { cursorPosition: 5, plainText: "    ", escapes: [] }
+
+    it "When there's no character it shouldn't do anything" do
+      composeOperations
+        [ MoveOneWordRight
+        ]
+        { cursorPosition: 1, plainText: "", escapes: [] } `shouldEqual`
+        { cursorPosition: 1, plainText: "", escapes: [] }
+
+  describe "Move to left till the head of the word" do
+    it "Move from the tail without space" do
+      composeOperations
+        [ MoveOneWordLeft
+        ]
+        { cursorPosition: 6, plainText: "abcde", escapes: [] } `shouldEqual`
+        { cursorPosition: 1, plainText: "abcde", escapes: [ wrap $ Back 5 ] }
+
+    it "Move from the middle without space" do
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveOneWordLeft
+        ]
+        { cursorPosition: 6, plainText: "abcde", escapes: [] } `shouldEqual`
+        { cursorPosition: 1, plainText: "abcde", escapes: [ wrap $ Back 5 ] }
+
+    it "Move from the tail with spaces" do
+      composeOperations
+        [ MoveOneWordLeft
+        ]
+        { cursorPosition: 10, plainText: "abcde    ", escapes: [] } `shouldEqual`
+        { cursorPosition: 1, plainText: "abcde    ", escapes: [ wrap $ Back 9 ] }
+
+    it "Move from the head to head" do
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveOneWordLeft
+        ]
+        { cursorPosition: 14, plainText: "  abcd  abcde", escapes: [] } `shouldEqual`
+        { cursorPosition: 3, plainText: "  abcd  abcde", escapes: [ wrap $ Back 11 ] }
+
+    it "Move from the tail with multiple words" do
+      composeOperations
+        [ MoveOneWordLeft
+        ]
+        { cursorPosition: 13, plainText: "abcde abc aa", escapes: [] } `shouldEqual`
+        { cursorPosition: 11, plainText: "abcde abc aa", escapes: [ wrap $ Back 2 ] }
+
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveOneWordLeft
+        ]
+        { cursorPosition: 8, plainText: "abcde abc aa", escapes: [] } `shouldEqual`
+        { cursorPosition: 7, plainText: "abcde abc aa", escapes: [ wrap $ Back 6 ] }
+
+    it "Move to left but only spaces" do
+      composeOperations
+        [ MoveLeft
+        , MoveOneWordLeft
+        ]
+        { cursorPosition: 5, plainText: "    ", escapes: [] } `shouldEqual`
+        { cursorPosition: 1, plainText: "    ", escapes: [ wrap $ Back 4 ] }
+
+    it "When there's no character it shouldn't do anything" do
+      composeOperations
+        [ MoveOneWordLeft
+        ]
+        { cursorPosition: 1, plainText: "", escapes: [] } `shouldEqual`
+        { cursorPosition: 1, plainText: "", escapes: [] }
 
   describe "MoveToTail" do
     it "" $ fail "TODO"

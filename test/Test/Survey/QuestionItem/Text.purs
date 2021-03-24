@@ -8,8 +8,9 @@ import Data.Char (fromCharCode, toCharCode)
 import Data.Maybe (Maybe(..))
 import Data.Show (class Show)
 import Effect.Exception (Error)
-import Survey.Operation (Operation(..), evalOperation)
+import Survey.Operation (evalOperation)
 import Survey.QuestionItem.Text (keyToOperation)
+import Survey.Type (Operation(..))
 import Test.Spec (SpecT, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual)
 
@@ -68,7 +69,17 @@ text = do
       keyToOperation
         -- \x17 = \23
         { ctrl: true, meta: false, name: (Just "w"), sequence: "\x17", shift: false } `shouldEqual`
-        DeleteAWordBeforeCursor
+        DeleteOneWordBeforeCursor
+
+    it "[space] should prints a space" do
+      keyToOperation
+        { ctrl: false, meta: false, name: (Just "space"), sequence: " ", shift: false } `shouldEqual`
+        PrintCharacter " "
+
+    it "[tab] shouldn't do anything" do
+      keyToOperation
+        { ctrl: false, meta: false, name: (Just "tab"), sequence: "\t", shift: false } `shouldEqual`
+        DoNothing
 
     it "[backspace] should delete a character before the cursor" do
       keyToOperation
@@ -94,16 +105,30 @@ text = do
         { ctrl: false, meta: false, name: (Just "down"), sequence: "\x1B[B", shift: false } `shouldEqual`
         DoNothing
 
-    it "[right] and [left] moves the cursor to its direction" do
+    it "[right] should move the cursor to right" do
        keyToOperation
          -- \x1B[C = \27[C
          { ctrl: false, meta: false, name: (Just "right"), sequence: "\x1B[C", shift: false } `shouldEqual`
          MoveRight
 
+    it "[left] should move the cursor to left" do
        keyToOperation
          -- \x1B[D = \27[D
          { ctrl: false, meta: false, name: (Just "left"), sequence: "\x1B[D", shift: false } `shouldEqual`
          MoveLeft
+
+    it "[ctrl]+[right] should move the cursor to just after the tail of the next word" do
+       keyToOperation
+         -- \x1B[1;5C = \27[1;5C
+         { ctrl: true, meta: false, name: (Just "right"), sequence: "\x1B[1;5C", shift: false } `shouldEqual`
+         MoveOneWordRight
+
+    it "[ctrl]+[left] should move the cursor to the head of the previous word" do
+       keyToOperation
+         -- \x1B[1;5D = \27[1;5D
+         { ctrl: true, meta: false, name: (Just "left"), sequence: "\x1B[D1;5D", shift: false } `shouldEqual`
+         MoveOneWordLeft
+
 
     it "[a-zA-Z0-9!$@#... ] prints itself" do
       -- https://www.ionos.com/digitalguide/server/know-how/ascii-codes-overview-of-all-characters-on-the-ascii-table/
