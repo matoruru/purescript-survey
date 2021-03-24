@@ -3,6 +3,7 @@
   "scripts": {
     "postinstall": "spago install",
     "build": "spago build",
-    "test": "spago test --config test/test.dhall"
+    "test": "spago test --config test/test.dhall",
+    "test:failed": "yarn test | grep -v \"✓︎\""
   }
 }
