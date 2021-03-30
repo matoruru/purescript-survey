@@ -101,7 +101,14 @@ evalOperation = case _ of
            , escapes = aggregateMovements [ wrap $ Back $ (String.length os.plainText + 1) - idx ]
            }
       else identity os
-  MoveToTail -> identity
-  MoveToHead -> identity
+  MoveToTail -> \os -> do
+    let idx = String.length os.plainText + 1
+    os { cursorPosition = idx
+       , escapes = []
+       }
+  MoveToHead -> \os -> do
+    os { cursorPosition = 1
+       , escapes = aggregateMovements [ wrap $ Back $ String.length os.plainText ]
+       }
   DoNothing -> identity
 

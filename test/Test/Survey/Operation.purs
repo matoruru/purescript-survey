@@ -513,8 +513,86 @@ operations = describe "Composing multiple operations" do
         { cursorPosition: 1, plainText: "", escapes: [] } `shouldEqual`
         { cursorPosition: 1, plainText: "", escapes: [] }
 
-  describe "MoveToTail" do
-    it "" $ fail "TODO"
+  describe "Move to tail" do
+    it "Move to tail" do
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveToTail
+        ]
+        { cursorPosition: 13, plainText: "abcde abc aa", escapes: [] } `shouldEqual`
+        { cursorPosition: 13, plainText: "abcde abc aa", escapes: [] }
 
-  describe "MoveToHead" do
-    it "" $ fail "TODO"
+    it "Move to tail from head" do
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveToTail
+        ]
+        { cursorPosition: 10, plainText: "abcde    ", escapes: [] } `shouldEqual`
+        { cursorPosition: 10, plainText: "abcde    ", escapes: [] }
+
+    it "Moving from the tail shouldn't do anything" do
+      composeOperations
+        [ MoveToTail
+        ]
+        { cursorPosition: 10, plainText: "abcde    ", escapes: [] } `shouldEqual`
+        { cursorPosition: 10, plainText: "abcde    ", escapes: [] }
+
+    it "Moving when without any character shouldn't do anything" do
+      composeOperations
+        [ MoveToTail
+        ]
+        { cursorPosition: 1, plainText: "", escapes: [] } `shouldEqual`
+        { cursorPosition: 1, plainText: "", escapes: [] }
+
+  describe "Move to head" do
+    it "Move to tail" do
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveToHead
+        ]
+        { cursorPosition: 13, plainText: "abcde abc aa", escapes: [] } `shouldEqual`
+        { cursorPosition: 1, plainText: "abcde abc aa", escapes: [ wrap $ Back 12 ] }
+
+    it "Move to head from tail" do
+      composeOperations
+        [ MoveToHead
+        ]
+        { cursorPosition: 10, plainText: "abcde    ", escapes: [] } `shouldEqual`
+        { cursorPosition: 1, plainText: "abcde    ", escapes: [ wrap $ Back 9 ] }
+
+    it "Moving from the head shouldn't do anything" do
+      composeOperations
+        [ MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveLeft
+        , MoveToHead
+        ]
+        { cursorPosition: 10, plainText: "abcde    ", escapes: [] } `shouldEqual`
+        { cursorPosition: 1, plainText: "abcde    ", escapes: [ wrap $ Back 9 ] }
+
+    it "Moving when without any character shouldn't do anything" do
+      composeOperations
+        [ MoveToHead
+        ]
+        { cursorPosition: 1, plainText: "", escapes: [] } `shouldEqual`
+        { cursorPosition: 1, plainText: "", escapes: [] }
