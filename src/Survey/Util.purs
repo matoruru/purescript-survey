@@ -5,7 +5,7 @@ import Prelude
 import Ansi.Codes (EscapeCode(..))
 import Control.Monad.State (runState)
 import Control.Monad.State as State
-import Data.Array (splitAt)
+import Data.Array (length, splitAt)
 import Data.Foldable (foldl)
 import Data.Newtype (unwrap, wrap)
 import Data.String.Utils (toCharArray)
@@ -51,5 +51,34 @@ findFirstTailFrom position str = fst $ flip runState { position, rest: toCharArr
         { before: [c], after } -> do
           when (c /= " ") do
             State.modify_ _ { position = s.position + 1, rest = after }
+            skipChars
+        _ -> pure unit
+
+findFirstHeadFrom :: Int -> String -> Int
+findFirstHeadFrom position str = fst $ flip runState { position, rest: toCharArray str }
+  do
+    skipTillPosition
+    skipWhitespaces
+    skipChars
+    State.gets _.position
+  where
+    skipTillPosition = do
+      s <- State.get
+      State.modify_ _ { rest = (splitAt (s.position - 1) s.rest).before }
+
+    skipWhitespaces = do
+      s <- State.get
+      case splitAt (length s.rest - 1) s.rest of
+        { before, after: [" "] } -> do
+          State.modify_ _ { position = s.position - 1, rest = before }
+          skipWhitespaces
+        _ -> pure unit
+
+    skipChars = do
+      s <- State.get
+      case splitAt (length s.rest - 1) s.rest of
+        { before, after: [c] } -> do
+          when (c /= " ") do
+            State.modify_ _ { position = s.position - 1, rest = before }
             skipChars
         _ -> pure unit

@@ -62,7 +62,7 @@ keypressLoop = makeAff \cb -> do
                  <> show newState
                  <> escapeCodeToString (Position 3 0)
                  <> escapeCodeToString (EraseLine Entire)
-                 <> show { ctrl: false, meta: false, name: (Just "backspace"), sequence: "\x17", shift: false }
+                 <> show { ctrl: false, meta: false, name: (Just "backspace"), sequence: "\x1B[D1;5D", shift: false }
                  <> escapeCodeToString RestorePosition
 
   mempty

@@ -495,7 +495,7 @@ operations = describe "Composing multiple operations" do
         , MoveLeft
         , MoveOneWordLeft
         ]
-        { cursorPosition: 8, plainText: "abcde abc aa", escapes: [] } `shouldEqual`
+        { cursorPosition: 13, plainText: "abcde abc aa", escapes: [] } `shouldEqual`
         { cursorPosition: 7, plainText: "abcde abc aa", escapes: [ wrap $ Back 6 ] }
 
     it "Move to left but only spaces" do

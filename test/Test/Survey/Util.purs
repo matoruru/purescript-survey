@@ -8,7 +8,7 @@ import Data.Newtype (wrap)
 import Data.Show (class Show)
 import Effect.Exception (Error)
 import Survey.Operation (evalOperation)
-import Survey.Util (aggregateMovements, findFirstTailFrom)
+import Survey.Util (aggregateMovements, findFirstHeadFrom, findFirstTailFrom)
 import Test.Spec (SpecT, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
@@ -84,3 +84,37 @@ utils = do
 
     it "When there's no characters shoudn't do anything" do
       findFirstTailFrom 1 "" `shouldEqual` 1
+
+  --
+  --  " word       _ "
+  --    ^          ^
+  --    |          |
+  -- find here    position
+  --
+  describe "Find the first head of word" do
+    it "Only one word" do
+      findFirstHeadFrom 4 "abc" `shouldEqual` 1
+
+    it "After the word" do
+      findFirstHeadFrom 6 "  abc " `shouldEqual` 3
+
+    it "From inside the word" do
+      findFirstHeadFrom 4 "  abc " `shouldEqual` 3
+
+    it "From beginning of the word" do
+      findFirstHeadFrom 3 "  abc " `shouldEqual` 1
+
+    it "Two words" do
+      findFirstHeadFrom 11 "  abc defg " `shouldEqual` 7
+
+    it "Head to the next Head" do
+      findFirstHeadFrom 7 "  abc defg " `shouldEqual` 3
+
+    it "Without word" do
+      findFirstHeadFrom 4 "   " `shouldEqual` 1
+
+    it "From the beginning of line shoudn't do anything" do
+      findFirstHeadFrom 1 "   " `shouldEqual` 1
+
+    it "When there's no characters shoudn't do anything" do
+      findFirstHeadFrom 1 "" `shouldEqual` 1

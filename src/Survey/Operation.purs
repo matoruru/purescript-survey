@@ -17,7 +17,7 @@ import Data.String.Utils (trimEnd, trimStart)
 import Data.Tuple (fst)
 import Survey.Internal (EscapeCodeWrapper(..))
 import Survey.Type (CursorPosition, Operation(..), OutputState)
-import Survey.Util (aggregateMovements, findFirstTailFrom)
+import Survey.Util (aggregateMovements, findFirstHeadFrom, findFirstTailFrom)
 
 evalOperation :: Operation -> OutputState -> OutputState
 evalOperation = case _ of
@@ -93,7 +93,14 @@ evalOperation = case _ of
            , escapes = aggregateMovements [ wrap $ Back $ (String.length os.plainText + 1) - idx ]
            }
       else identity os
-  MoveOneWordLeft -> identity
+  MoveOneWordLeft -> \os ->
+    if os.cursorPosition > 1
+      then do
+        let idx = findFirstHeadFrom os.cursorPosition os.plainText
+        os { cursorPosition = idx
+           , escapes = aggregateMovements [ wrap $ Back $ (String.length os.plainText + 1) - idx ]
+           }
+      else identity os
   MoveToTail -> identity
   MoveToHead -> identity
   DoNothing -> identity
