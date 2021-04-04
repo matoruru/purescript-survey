@@ -60,7 +60,7 @@ keypressLoop = makeAff \cb -> do
             _ <- tryPut newState state
             print $ newState.plainText <> joinWith "" (map escapeCodeToString (map unwrap newState.escapes))
             if (toNumber $ newState.cursorPosition) % (toNumber columns') == 1.0
-              then print $ escapeCodeToString (NextLine 1) <> escapeCodeToString (HorizontalAbsolute 0)
+              then print newLineCharacter
               else pure unit
 
             -- Debug
@@ -83,6 +83,10 @@ keypressLoop = makeAff \cb -> do
                  <> escapeCodeToString RestorePosition
 
   mempty
+
+newLineCharacter :: String
+newLineCharacter =  """
+"""
 
 print :: String -> Effect Unit
 print s = void $ flip (writeString stdout UTF8) mempty s
