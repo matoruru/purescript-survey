@@ -3,15 +3,18 @@ module Main where
 import Prelude
 
 import Ansi.Codes (EraseParam(..), EscapeCode(..), eraseParamToString, escapeCodeToString)
+import Data.Array (concat, (..))
+import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Data.String (joinWith)
+import Data.String (joinWith, length)
 import Data.Traversable (for, sequence)
 import Effect (Effect)
 import Effect.AVar (AVar, new, put, take, tryPut, tryTake)
 import Effect.Aff (Aff, launchAff_, makeAff)
 import Effect.Class.Console as Console
 import Effect.Uncurried (EffectFn1, EffectFn2, mkEffectFn2, runEffectFn1, runEffectFn2)
+import Math ((%))
 import Node.Encoding (Encoding(..))
 import Node.Process (stdin, stdout)
 import Node.ReadLine (close, createInterface)
@@ -47,10 +50,18 @@ keypressLoop = makeAff \cb -> do
         case outputState of
           Nothing -> pure unit
           Just os -> do
-            print $ escapeCodeToString (EraseLine Entire) <> escapeCodeToString (HorizontalAbsolute 0)
+            columns' <- columns stdout
             let newState = text key os
+            let lines = (length newState.plainText - 1) / columns' + 1
+            print $ escapeCodeToString (EraseLine Entire) <> escapeCodeToString (HorizontalAbsolute 0)
+            if lines == 2 then do
+              print $ escapeCodeToString $ Up 1
+            else pure unit
             _ <- tryPut newState state
             print $ newState.plainText <> joinWith "" (map escapeCodeToString (map unwrap newState.escapes))
+            if (toNumber $ newState.cursorPosition) % (toNumber columns') == 1.0
+              then print $ escapeCodeToString (NextLine 1) <> escapeCodeToString (HorizontalAbsolute 0)
+              else pure unit
 
             -- Debug
             print $ escapeCodeToString SavePosition
@@ -63,6 +74,12 @@ keypressLoop = makeAff \cb -> do
                  <> escapeCodeToString (Position 3 0)
                  <> escapeCodeToString (EraseLine Entire)
                  <> show { ctrl: false, meta: false, name: (Just "backspace"), sequence: "\x1B[D1;5D", shift: false }
+                 <> escapeCodeToString (Position 4 0)
+                 <> escapeCodeToString (EraseLine Entire)
+                 <> "columns: " <> show columns'
+                 <> escapeCodeToString (Position 5 0)
+                 <> escapeCodeToString (EraseLine Entire)
+                 <> "lines: " <> show lines
                  <> escapeCodeToString RestorePosition
 
   mempty
