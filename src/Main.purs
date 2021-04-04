@@ -15,7 +15,7 @@ import Effect.Uncurried (EffectFn1, EffectFn2, mkEffectFn2, runEffectFn1, runEff
 import Node.Encoding (Encoding(..))
 import Node.Process (stdin, stdout)
 import Node.ReadLine (close, createInterface)
-import Node.Stream (Readable, writeString)
+import Node.Stream (Readable, Writable, writeString)
 import Survey.Internal (Key)
 import Survey.QuestionItem.Text (text)
 import Unsafe.Coerce (unsafeCoerce)
@@ -74,6 +74,7 @@ foreign import setRawModeImpl :: EffectFn2 (Readable ()) Boolean Unit
 foreign import emitKeypressEventsImpl :: EffectFn1 (Readable ()) Unit
 foreign import onKeypressImpl :: (String -> Maybe String) -> Maybe String -> EffectFn2 (Readable ()) KeypressEventHandlerImpl Unit
 foreign import removeAllListenersImpl :: EffectFn1 (Readable ()) Unit
+foreign import columnsImpl :: EffectFn1 (Writable ()) Int
 
 setRawMode :: Readable () -> Boolean -> Effect Unit
 setRawMode = runEffectFn2 setRawModeImpl
@@ -89,3 +90,6 @@ removeAllListeners = runEffectFn1 removeAllListenersImpl
 
 stdinIsTTY :: Boolean
 stdinIsTTY = (unsafeCoerce stdin).isTTY
+
+columns :: Writable () -> Effect Int
+columns = runEffectFn1 columnsImpl

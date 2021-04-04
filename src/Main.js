@@ -27,3 +27,7 @@ exports.removeAllListenersImpl = (stdin) => {
   stdin.removeAllListeners('keypress')
   return {}
 }
+
+exports.columnsImpl = (stdout) => {
+  return stdout.columns
+}
